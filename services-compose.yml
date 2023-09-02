@@ -1,0 +1,54 @@
+x-shared-env: &shared_env
+  OTEL_TRACES_EXPORTER: otlp
+  OTEL_METRICS_EXPORTER: otlp
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://otel:4318
+  OTEL_NODE_RESOURCE_DETECTORS: env,host,os,process,container
+  REDIS_HOST: redis://redis:6379
+x-logger: &logger
+  depends_on:
+    - fluentbit
+  logging:
+    driver: fluentd
+    options:
+      fluentd-address: 127.0.0.1:24224
+
+services:
+  nodejs1:
+    image: node:18-alpine
+    command: sh -c "yarn install && yarn build && yarn node-1"
+    working_dir: /service
+    ports:
+      - 5000:5000
+    volumes:
+      - ./microservices:/service
+      - /service/node_modules
+    environment:
+      <<: *shared_env
+      OTEL_SERVICE_NAME: nodejs1
+      UPSTREAM_ENDPOINT: http://nodejs2:5000
+    <<: *logger
+
+  nodejs2:
+    image: node:18-alpine
+    command: sh -c "yarn install && yarn build && yarn node-2"
+    working_dir: /service
+    volumes:
+      - ./microservices:/service
+      - /service/node_modules
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      <<: *shared_env
+      OTEL_SERVICE_NAME: nodejs2
+      PG_HOST: postgres
+    <<: *logger
+
+  redis:
+    image: redis:alpine
+
+  postgres:
+    image: postgres:14.5-alpine
+    environment:
+      POSTGRES_PASSWORD: "root"
+      POSTGRES_DB: "postgres"
