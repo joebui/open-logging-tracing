@@ -23,8 +23,9 @@ Diagram created using <https://excalidraw.com/>
 
 ## Start system locally
 
-- Docker pre-installed on machine (only tested with **x86_64** arch in latest commit)
+- Docker pre-installed on machine
 - Simply run `make up`
+- Optional: if you want to use Taskfile instead, refer to [this link](https://taskfile.dev/installation/) to install, replace `make` with `task`
 - Wait for few seconds for services to start
 
 ## API requests
